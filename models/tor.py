@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import Dataset
@@ -67,33 +68,43 @@ def validate_model(dataloader, model, loss_fn):
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     test_loss /= size
     correct /= size
-    print(f"Test Error: \nAccuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+    print(f"Test Error: \nAccuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+
+
+def transform_labels(y):
+    original = [1, 2, 3, 5, 6, 7]
+    new = [0, 1, 2, 3, 5, 5]
+    transform = {original[i]: new[i] for i in range(len(original))}
+    return transform[y]
+
+
+def restore_labels(y):
+    original = [1, 2, 3, 5, 6, 7]
+    new = [0, 1, 2, 3, 5, 5]
+    restore = {new[i]: original[i] for i in range(len(original))}
+    return restore[y]
 
 
 def predict_test(dataloader, model):
-    preds = []
+    preds = np.array([])
     model.eval()
     with torch.no_grad():
         for X in dataloader:
             pred = model(X)
-            pred_category = pred  # .argmax(1)
-            preds += pred_category
+            pred_category = pred.argmax(1).detach().numpy()
+            preds = np.append(preds, pred_category)
     return preds
 
 
 class Torch(nn.Module):
     def __init__(self, input_size, output_size):
         super().__init__()
-        self.fc1 = nn.Linear(input_size, 32)
-        self.fc2 = nn.Linear(32, 64)
-        self.fc3 = nn.Linear(64, output_size)
-        self.dropout = nn.Dropout(0.2)
+        self.fc1 = nn.Linear(input_size, 2)
+        self.fc2 = nn.Linear(2, output_size)
 
     def forward(self, x):
-        x = self.dropout(x)
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
         return x
 
 
