@@ -103,8 +103,10 @@ class Torch(nn.Module):
         self.fc2 = nn.Linear(2, output_size)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
+        x = self.fc1(x)
+        x = torch.relu(x)
+        x = self.fc2(x)
+        x = torch.softmax(x, dim=1)
         return x
 
 
